@@ -1,16 +1,28 @@
-# trackrr-api
 
-This is a rest api for trackrr App
+## Project Setup
 
-#Instruction
+Install Project dependency by :
 
-First, create .env file in root project folder
-Add a value for
+```bash
+  npm install
+```
+After that you will need to create  .env file and fill these variable :
 
-- TWILIO_API_KEY
-- TWILIO_ACCOUNT_SID
-- TWILIO_VERIFY_SID
-- SECRET_KEY
+```bash
+TWILIO_API_KEY=
+TWILIO_ACCOUNT_SID=
+TWILIO_VERIFY_SID=
+SECRET_KEY=
+```
 
-After that run : npx prisma migrate dev --name init
-Lastly, run the server by : npm run dev
+Now that you have assign the value, now we need to migrate by :
+
+```bash
+  npx prisma migrate dev --name init
+```
+
+and lastly for running the project :
+
+```bash
+  npm run dev
+```
