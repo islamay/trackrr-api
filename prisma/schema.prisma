@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  USER
+}
+
+model User {
+  id                 String          @id @default(uuid())
+  name               String
+  phone              String          @unique
+  role               UserRole        @default(USER)
+  companies          CompanyMember[]
+  sessions           Session[]
+  sentInvitation     Invitation[]    @relation("InvitationSender")
+  receivedInvitation Invitation[]    @relation("InvitationReceiver")
+}
+
+model Session {
+  id      String   @id @default(uuid())
+  userId  String
+  token   String   @db.TinyText
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  created DateTime @default(now())
+}
+
+enum InvitationState {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model Invitation {
+  id         String          @id @default(uuid())
+  companyId  String
+  senderId   String
+  receiverId String
+  expiresIn  DateTime
+  isExpired  Boolean         @default(false) @map("expiresIn <= now()")
+  status     InvitationState @default(PENDING)
+  readed     Boolean         @default(false)
+  company    Company         @relation(fields: [companyId], references: [id])
+  sender     User            @relation("InvitationSender", fields: [senderId], references: [id])
+  receiver   User            @relation("InvitationReceiver", fields: [receiverId], references: [id])
+}
+
+model Company {
+  id          String          @id @default(uuid())
+  name        String
+  members     CompanyMember[]
+  workshifts  Workshift[]
+  invitations Invitation[]
+}
+
+enum MemberRole {
+  OWNER
+  OPERATOR
+  MEMBER
+}
+
+model CompanyMember {
+  id         String            @id @default(uuid())
+  role       MemberRole        @default(MEMBER)
+  companyId  String
+  userId     String
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company    Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  workshifts WorkshiftMember[]
+}
+
+model Workshift {
+  id           String            @id @default(uuid())
+  name         String
+  workingStart String            @db.VarChar(8)
+  workingEnd   String            @db.VarChar(8)
+  companyId    String
+  company      Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  members      WorkshiftMember[]
+  attendances  Attendance[]
+}
+
+model WorkshiftMember {
+  id              String        @id @default(uuid())
+  workshiftId     String
+  companyMemberId String
+  workshift       Workshift     @relation(fields: [workshiftId], references: [id], onDelete: Cascade)
+  companyMember   CompanyMember @relation(fields: [companyMemberId], references: [id], onDelete: Cascade)
+  attendances     Attendance[]
+}
+
+enum AttendanceStatus {
+  ONGOING
+  DONE
+}
+
+model Attendance {
+  id                String           @id @default(uuid())
+  workshiftId       String
+  workshiftMemberId String
+  checkedInTime     DateTime         @default(now())
+  checkedOutTime    DateTime?
+  status            AttendanceStatus
+  workshift         Workshift        @relation(fields: [workshiftId], references: [id], onDelete: Cascade)
+  workshiftMember   WorkshiftMember  @relation(fields: [workshiftMemberId], references: [id], onDelete: Cascade)
+  tracks            Track[]
+}
+
+model Track {
+  id           String     @id @default(uuid())
+  lat          Int
+  lan          Int
+  attendanceId String
+  attendance   Attendance @relation(fields: [attendanceId], references: [id], onDelete: Cascade)
+}
